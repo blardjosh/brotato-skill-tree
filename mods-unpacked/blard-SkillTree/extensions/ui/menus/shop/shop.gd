@@ -4,6 +4,7 @@ extends "res://ui/menus/shop/shop.gd"
 const BlardSkillTreeShop = preload("res://mods-unpacked/blard-SkillTree/shop_hooks.gd")
 
 var _blard_skilltree_screen = null
+var _blard_skilltree_tick = 0.0
 
 
 # Godot 3 runs every script level's _ready (base first), so the shop is fully set up here.
@@ -35,3 +36,12 @@ func _blard_skilltree_on_changed(player_index: int) -> void:
 func _blard_skilltree_on_closed() -> void:
 	_blard_skilltree_screen = null
 	BlardSkillTreeShop.refresh_buttons(self)
+
+
+func _process(delta: float) -> void:
+	_blard_skilltree_tick += delta
+	if _blard_skilltree_tick < 1.0:
+		return
+	_blard_skilltree_tick = 0.0
+	if _blard_skilltree_screen == null or not is_instance_valid(_blard_skilltree_screen):
+		BlardSkillTreeShop.tick(self)

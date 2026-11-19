@@ -7,12 +7,14 @@ const ScreenScript = preload("res://mods-unpacked/blard-SkillTree/ui/skill_tree_
 const BUTTON_NAME := "BlardSkillTreeButton"
 const SOLO_HEADER_PATH := "Content/MarginContainer/HBoxContainer/VBoxContainer/HBoxContainer"
 const COOP_HEADER_PATH := "MarginContainer/Carousel/Content/VBoxContainer/HBoxContainer"
-const FONT_PATH := "res://resources/fonts/actual/base/font_26_outline.tres"
+const MENU_BUTTON_SCRIPT := "res://ui/menus/global/my_menu_button.gd"
 
 
-# Adds a "Skill Tree" button per player next to the reroll button. Mouse-only (no focus), so
-# controller navigation in the shop is unchanged; controllers use Back/Select instead.
+# Adds a "Skill Tree" button per player next to the reroll button, styled and sized like the
+# shop's own buttons.
 static func add_buttons(shop) -> void:
+	for player_index in RunData.get_player_count():
+		SkillTree.refresh_scaling(player_index)
 	for player_index in RunData.get_player_count():
 		var header: Node = null
 		if RunData.is_coop_run:
@@ -24,12 +26,21 @@ static func add_buttons(shop) -> void:
 			header = shop.get_node_or_null(SOLO_HEADER_PATH)
 		if header == null:
 			continue
-		var button: = Button.new()
+		var button = Button.new()
+		# Same script as the shop's GO button: game hover/press sounds and focus behaviour.
+		if ResourceLoader.exists(MENU_BUTTON_SCRIPT):
+			button.set_script(load(MENU_BUTTON_SCRIPT))
+			# In co-op, hovering must not steal real focus from the per-player focus emulators.
+			button.grab_focus_with_mouse = not RunData.is_coop_run
 		button.name = BUTTON_NAME
-		button.focus_mode = Control.FOCUS_NONE
-		button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-		if ResourceLoader.exists(FONT_PATH):
-			button.add_font_override("font", load(FONT_PATH))
+		# Focusable in solo and co-op: co-op focus emulators only visit FOCUS_ALL controls, and
+		# their "pressed" reaches the per-player connection below.
+		button.focus_mode = Control.FOCUS_ALL
+		button.mouse_filter = Control.MOUSE_FILTER_STOP
+		# No font/size overrides: it takes the shop theme like the Reroll button next to it and
+		# fills the header row's height, so it scales with the rest of the UI.
+		button.size_flags_vertical = Control.SIZE_FILL
+		button.size_flags_horizontal = 0
 		var _err = button.connect("pressed", shop, "_blard_skilltree_open", [player_index])
 		header.add_child(button)
 		var reroll = header.get_node_or_null("RerollButton")
@@ -44,8 +55,8 @@ static func refresh_buttons(shop) -> void:
 		if button == null:
 			continue
 		var points: int = SkillTree.get_points(player_index)
-		var label: = "Tree" if RunData.is_coop_run else "Skill Tree"
-		button.text = "%s (%d)" % [label, points] if points > 0 else label
+		var label = "Tree" if RunData.is_coop_run else "Skill Tree"
+		button.text = " %s (%d) " % [label, points] if points > 0 else " %s " % label
 		button.modulate = Color(1.0, 0.9, 0.5) if points > 0 else Color(1, 1, 1)
 
 
@@ -97,3 +108,11 @@ static func on_tree_changed(shop, player_index: int) -> void:
 			if items_container.has_method("update_buttons_color"):
 				items_container.update_buttons_color()
 	refresh_buttons(shop)
+
+
+# Called about once a second: buying meca/mutant/cursed items changes the levels that
+# scaling nodes follow.
+static func tick(shop) -> void:
+	for player_index in RunData.get_player_count():
+		if SkillTree.refresh_scaling(player_index):
+			on_tree_changed(shop, player_index)

@@ -18,11 +18,11 @@ const MODE_VIEW := 1
 const THEME_PATH := "res://resources/themes/base_theme.tres"
 const FONT_DIR := "res://resources/fonts/actual/base/"
 const TREE_RADIUS := 1080.0
-const MIN_ZOOM := 0.22
+const MIN_ZOOM := 0.08
 const MAX_ZOOM := 1.6
 const NODE_RADIUS := [30.0, 15.0, 25.0, 36.0]
 
-var SECTOR_COLORS := [
+var SECTOR_COLORS = [
 	Color("e0574f"), # Vitality
 	Color("f08a3c"), # Melee
 	Color("f2d15a"), # Precision
@@ -32,15 +32,22 @@ var SECTOR_COLORS := [
 	Color("e6c240"), # Fortune
 	Color("7fe6d8"), # Agility
 ]
-var RING_COLOR := Color("b9b9c8")
-var GOLD := Color("ffd560")
-var PREVIEW := Color("8fe3ff")
-var GOOD_TEXT := Color("8ef08e")
-var BAD_TEXT := Color("ff7b7b")
+var RING_COLOR = Color("b9b9c8")
+var GOLD = Color("ffd560")
+var PREVIEW = Color("8fe3ff")
+var GOOD_TEXT = Color("8ef08e")
+var BAD_TEXT = Color("ff7b7b")
+var BONUS_TEXT = Color("d59bff")
+var FRONTIER = Color("c48cff")
+var ORBIT = Color("78e6ff")
+var MINOR = Color("e8e8e8")
+var RED_CRIT = Color("ff5a5a")
+var RELIC = Color("fff1b8")
+var ODDITY = Color("5ee6c8")
 
 var mode: int = MODE_VIEW
 var player_index: int = 0
-var _player_queue: = []
+var _player_queue = []
 
 var _root: Control
 var _canvas = null
@@ -59,24 +66,24 @@ var _font_tiny: Font
 var _font_mid: Font
 var _font_big: Font
 
-var cam: = Vector2.ZERO
-var zoom: = 0.5
-var _cam_target: = Vector2.ZERO
-var _following: = false
-var selected_id: = SkillTree.START_ID
-var _message: = ""
-var _message_time: = 0.0
+var cam = Vector2.ZERO
+var zoom = 0.5
+var _cam_target = Vector2.ZERO
+var _following = false
+var selected_id = SkillTree.START_ID
+var _message = ""
+var _message_time = 0.0
 
-var _dragging: = false
-var _drag_distance: = 0.0
-var _stick: = Vector2.ZERO
-var _rstick: = Vector2.ZERO
-var _move_cooldown: = 0.0
+var _dragging = false
+var _drag_distance = 0.0
+var _stick = Vector2.ZERO
+var _rstick = Vector2.ZERO
+var _move_cooldown = 0.0
 
-var _closing: = false
-var _closing_frames: = 0
+var _closing = false
+var _closing_frames = 0
 var _pause_menu = null
-var _pause_was_enabled: = true
+var _pause_was_enabled = true
 var _previous_mouse_mode: int = Input.MOUSE_MODE_VISIBLE
 
 
@@ -137,7 +144,7 @@ func _full_rect(control: Control) -> void:
 
 
 func _panel_style() -> StyleBoxFlat:
-	var style: = StyleBoxFlat.new()
+	var style = StyleBoxFlat.new()
 	style.bg_color = Color(0.07, 0.07, 0.1, 0.92)
 	style.border_color = Color(0.35, 0.35, 0.45, 0.9)
 	style.set_border_width_all(2)
@@ -150,7 +157,7 @@ func _panel_style() -> StyleBoxFlat:
 
 
 func _make_label(font: Font, color: Color = Color.white) -> Label:
-	var label: = Label.new()
+	var label = Label.new()
 	if font != null:
 		label.add_font_override("font", font)
 	label.add_color_override("font_color", color)
@@ -169,7 +176,7 @@ func _build_ui() -> void:
 			_root.theme = theme_res
 	add_child(_root)
 
-	var background: = ColorRect.new()
+	var background = ColorRect.new()
 	_full_rect(background)
 	background.color = Color(0.025, 0.025, 0.04, 0.97)
 	background.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -183,11 +190,11 @@ func _build_ui() -> void:
 	_root.add_child(_canvas)
 
 	# Header: title + points (top left)
-	var header: = PanelContainer.new()
+	var header = PanelContainer.new()
 	header.add_stylebox_override("panel", _panel_style())
 	header.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	header.rect_position = Vector2(24, 20)
-	var header_box: = VBoxContainer.new()
+	var header_box = VBoxContainer.new()
 	header_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	header.add_child(header_box)
 	_title_label = _make_label(_font_big, GOLD)
@@ -220,7 +227,7 @@ func _build_ui() -> void:
 	_info_panel.margin_right = 584
 	_info_panel.margin_top = -330
 	_info_panel.margin_bottom = -70
-	var info_box: = VBoxContainer.new()
+	var info_box = VBoxContainer.new()
 	info_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_info_panel.add_child(info_box)
 	_info_title = _make_label(_font_mid, GOLD)
@@ -257,6 +264,8 @@ func _build_ui() -> void:
 
 func _show_player(p_player_index: int) -> void:
 	player_index = p_player_index
+	if SkillTree.refresh_scaling(player_index):
+		emit_signal("tree_changed", player_index)
 	selected_id = SkillTree.START_ID
 	cam = Vector2.ZERO
 	_cam_target = Vector2.ZERO
@@ -271,13 +280,13 @@ func _show_player(p_player_index: int) -> void:
 
 func _refresh_all() -> void:
 	var who: String = SkillTree.player_name(player_index)
-	var title: = "LEVEL UP!" if mode == MODE_LEVEL_UP else "SKILL TREE"
+	var title = "LEVEL UP!" if mode == MODE_LEVEL_UP else "SKILL TREE"
 	if who != "":
 		title += "  -  " + who
 	_title_label.text = title
 	if RunData.is_coop_run:
 		_title_label.add_color_override("font_color", CoopService.get_player_color(player_index))
-	var points: = SkillTree.get_points(player_index)
+	var points = SkillTree.get_points(player_index)
 	_points_label.text = "Skill points: %d      Allocated: %d" % [points, SkillTree.allocated_count(player_index)]
 	_points_label.add_color_override("font_color", GOLD if points > 0 else Color(0.8, 0.8, 0.85))
 	if mode == MODE_LEVEL_UP:
@@ -293,7 +302,7 @@ func _refresh_all() -> void:
 
 
 func _refresh_info() -> void:
-	var data: = SkillTree.get_node_data(selected_id)
+	var data = SkillTree.get_node_data(player_index, selected_id)
 	if data.empty():
 		_info_panel.visible = false
 		return
@@ -302,23 +311,52 @@ func _refresh_info() -> void:
 	var kind: int = int(data.get("kind", 1))
 	var sector: int = int(data.get("sector", -1))
 	var kind_text: String = ["Origin", "Passive", "Notable", "Keystone"][kind]
-	if sector >= 0 and sector < SkillTree.TreeData.SECTORS.size():
+	var flavor: String = str(data.get("flavor", ""))
+	if flavor != "":
+		kind_text = SkillTree.flavor_label(flavor) + " " + ["Passive", "Passive", "Notable", "Capstone"][kind]
+	elif str(data.get("special", "")) == "relic":
+		kind_text = "Relic  -  one of a kind"
+	elif str(data.get("special", "")) == "oddity":
+		kind_text = "Oddity Capstone"
+	elif str(data.get("special", "")) == "named":
+		kind_text = "Named Notable"
+	elif str(data.get("special", "")) == "minor":
+		kind_text = "Minor Passive  -  off the beaten path"
+	elif SkillTree.is_generated(data):
+		kind_text = "Uncharted " + ["Passive", "Passive", "Notable", "Capstone"][kind]
+	if sector >= 0 and sector < SkillTree.TreeData.SECTORS.size() and str(data.get("special", "")) != "minor":
 		kind_text += "  -  " + str(SkillTree.TreeData.SECTORS[sector])
+	if bool(data.get("novel", false)):
+		kind_text += "  -  New direction"
 	_info_kind.text = kind_text
 
-	var mult: float = SkillTree.get_state(player_index).mult
-	var lines: = []
+	var mult: float = SkillTree.node_mult(data, SkillTree.get_state(player_index).mult)
+	var lines = []
 	for stat in data.get("stats", []):
-		var value: = SkillTree.scaled_value(int(stat[1]), mult)
+		var value = SkillTree.scaled_value(int(stat[1]), mult)
 		var color: Color = GOOD_TEXT if SkillTree.is_stat_good(stat[0], value) else BAD_TEXT
 		lines.push_back("[color=#%s]%s[/color]" % [color.to_html(false), SkillTree.describe_stat(stat[0], value)])
+	if flavor != "":
+		var level: int = SkillTree.flavor_level(player_index, flavor)
+		var flavor_hex: String = SkillTree.flavor_color(flavor).to_html(false)
+		for entry in data.get("scaling", []):
+			lines.push_back("[color=#%s]%s[/color]" % [flavor_hex, SkillTree.describe_scaling(entry[0], float(entry[1]), level, mult)])
+		var source: String = {"meca": "your Evolution", "mutant": "your negative Evolution", "curse": "your Curse"}.get(flavor, "")
+		lines.push_back("[color=#999999]%s level: %d (= %s)[/color]" % [SkillTree.flavor_label(flavor), level, source])
+	for entry in data.get("mods", []):
+		lines.push_back("[color=#%s]%s[/color]" % [RED_CRIT.to_html(false), SkillTree.describe_mod(entry)])
+	var relic_id: String = str(data.get("relic", ""))
+	if relic_id != "" and SkillTree.RELIC_TEXT.has(relic_id):
+		lines.push_back("[color=#%s]%s[/color]" % [RELIC.to_html(false), SkillTree.RELIC_TEXT[relic_id]])
+	for bonus in data.get("bonus", []):
+		lines.push_back("[color=#%s]%s[/color]" % [BONUS_TEXT.to_html(false), SkillTree.describe_bonus(bonus)])
 	if lines.empty():
 		lines.push_back("Where every build begins.")
 	_info_stats.bbcode_text = PoolStringArray(lines).join("\n")
 
-	var status: = ""
-	var alloc: = SkillTree.allocated_set(player_index)
-	var uses_pad: = SkillTree.player_uses_gamepad(player_index)
+	var status = ""
+	var alloc = SkillTree.allocated_set(player_index)
+	var uses_pad = SkillTree.player_uses_gamepad(player_index)
 	if selected_id == SkillTree.START_ID:
 		status = "Starting point."
 	elif alloc.has(selected_id):
@@ -326,14 +364,21 @@ func _refresh_info() -> void:
 		if SkillTree.can_refund(player_index, selected_id):
 			status += "  " + ("Y" if uses_pad else "Right-click") + " to refund."
 	else:
-		var cost: = SkillTree.path_to(player_index, selected_id).size()
-		var points: = SkillTree.get_points(player_index)
+		var cost = SkillTree.path_to(player_index, selected_id).size()
+		var points = SkillTree.get_points(player_index)
 		if cost == 0:
 			status = "Unreachable."
 		elif cost > points:
 			status = "Needs %d point%s (you have %d)." % [cost, "" if cost == 1 else "s", points]
 		else:
 			status = "Costs %d point%s.  %s to allocate." % [cost, "" if cost == 1 else "s", "A" if uses_pad else "Click"]
+	if SkillTree.is_frontier(data) and not SkillTree.is_expanded(player_index, selected_id):
+		if int(data.get("orbit", 0)) != 0:
+			status += "\nOrbit frontier: the next cluster grows around the tree."
+		else:
+			status += "\nFrontier: taking it reveals a new cluster beyond."
+		if bool(data.get("novel", false)):
+			status += " Offers stats you haven't been building."
 	if _message != "":
 		status = _message
 	_info_status.text = status
@@ -350,11 +395,16 @@ func _to_world(screen_pos: Vector2) -> Vector2:
 
 
 func _node_color(data: Dictionary) -> Color:
+	var flavor: String = str(data.get("flavor", ""))
+	if flavor != "":
+		return SkillTree.flavor_color(flavor)
 	var sector: int = int(data.get("sector", -1))
 	if sector >= 0 and sector < SECTOR_COLORS.size():
 		return SECTOR_COLORS[sector]
 	if int(data.get("kind", 1)) == SkillTree.Kind.START:
 		return GOLD
+	if str(data.get("special", "")) == "minor":
+		return MINOR
 	return RING_COLOR
 
 
@@ -375,10 +425,10 @@ func _node_icon(data: Dictionary) -> Texture:
 
 
 func draw_tree(c: Control) -> void:
-	var g: = SkillTree.graph()
+	var g = SkillTree.graph(player_index)
 	var center: Vector2 = c.rect_size / 2.0
-	var alloc: = SkillTree.allocated_set(player_index)
-	var preview: = {}
+	var alloc = SkillTree.allocated_set(player_index)
+	var preview = {}
 	if not alloc.has(selected_id):
 		for id in SkillTree.path_to(player_index, selected_id):
 			preview[id] = true
@@ -387,8 +437,8 @@ func draw_tree(c: Control) -> void:
 	# Sector names around the edge.
 	if _font_mid != null:
 		for k in SkillTree.TreeData.SECTORS.size():
-			var angle: = deg2rad(-90.0 + 45.0 * k)
-			var world: = Vector2(cos(angle), sin(angle)) * (TREE_RADIUS + 110.0)
+			var angle = deg2rad(-90.0 + 45.0 * k)
+			var world = Vector2(cos(angle), sin(angle)) * (TREE_RADIUS + 110.0)
 			var pos: Vector2 = center + (world - cam) * zoom
 			var text: String = str(SkillTree.TreeData.SECTORS[k]).to_upper()
 			var text_size: Vector2 = _font_mid.get_string_size(text)
@@ -400,14 +450,14 @@ func draw_tree(c: Control) -> void:
 	for e in g.edges:
 		var a: Dictionary = g.nodes[e[0]]
 		var b: Dictionary = g.nodes[e[1]]
-		var pa: = _to_screen(a, center)
-		var pb: = _to_screen(b, center)
+		var pa = _to_screen(a, center)
+		var pb = _to_screen(b, center)
 		var a_on: bool = alloc.has(e[0])
 		var b_on: bool = alloc.has(e[1])
 		var a_path: bool = a_on or preview.has(e[0])
 		var b_path: bool = b_on or preview.has(e[1])
-		var color: = Color(0.3, 0.3, 0.36)
-		var width: = 3.0
+		var color = Color(0.3, 0.3, 0.36)
+		var width = 3.0
 		if a_on and b_on:
 			color = GOLD
 			width = 6.0
@@ -420,20 +470,20 @@ func draw_tree(c: Control) -> void:
 		c.draw_line(pa, pb, color, width * line_scale, true)
 
 	# Nodes
-	var view_rect: = Rect2(Vector2(-80, -80), c.rect_size + Vector2(160, 160))
+	var view_rect = Rect2(Vector2(-80, -80), c.rect_size + Vector2(160, 160))
 	for id in g.order:
 		var data: Dictionary = g.nodes[id]
-		var pos: = _to_screen(data, center)
+		var pos = _to_screen(data, center)
 		if not view_rect.has_point(pos):
 			continue
 		var kind: int = int(data.kind)
 		var radius: float = NODE_RADIUS[kind] * zoom
-		var base_color: = _node_color(data)
+		var base_color = _node_color(data)
 		var allocated: bool = alloc.has(id)
-		var reachable: bool = SkillTree.is_reachable(id, alloc)
+		var reachable: bool = SkillTree.is_reachable(g, id, alloc)
 		var outline: Color
 		var fill: Color
-		var icon_tint: = Color(1, 1, 1, 1)
+		var icon_tint = Color(1, 1, 1, 1)
 		if allocated:
 			outline = GOLD
 			fill = base_color.darkened(0.25)
@@ -450,13 +500,33 @@ func draw_tree(c: Control) -> void:
 			fill = Color(0.06, 0.06, 0.08)
 			icon_tint = Color(1, 1, 1, 0.35)
 		var ring: float = (5.0 if kind >= SkillTree.Kind.NOTABLE else 3.5) * line_scale
+		var generated: bool = SkillTree.is_generated(data)
+		if SkillTree.is_frontier(data) and not SkillTree.is_expanded(player_index, id):
+			var pulse: float = 0.5 + 0.5 * sin(OS.get_ticks_msec() / 300.0)
+			var glow: Color = ORBIT if int(data.get("orbit", 0)) != 0 else FRONTIER
+			glow.a = 0.25 + 0.35 * pulse
+			c.draw_arc(pos, radius + ring + (12.0 + 4.0 * pulse) * line_scale, 0.0, TAU, 40, glow, 3.0 * line_scale, true)
 		if kind == SkillTree.Kind.KEYSTONE:
-			c.draw_circle(pos, radius + ring * 2.2, outline.darkened(0.3))
+			var halo: Color = FRONTIER.darkened(0.2) if generated else outline.darkened(0.3)
+			var special: String = str(data.get("special", ""))
+			if special == "relic":
+				halo = RELIC
+				var sparkle: float = 0.5 + 0.5 * sin(OS.get_ticks_msec() / 220.0)
+				var star: Color = RELIC
+				star.a = 0.35 + 0.4 * sparkle
+				c.draw_arc(pos, radius + ring * 3.4, 0.0, TAU, 48, star, 2.0 * line_scale, true)
+			elif special == "oddity":
+				halo = ODDITY.darkened(0.15)
+			c.draw_circle(pos, radius + ring * 2.2, halo)
 		c.draw_circle(pos, radius + ring, outline)
 		c.draw_circle(pos, radius, fill)
-		var icon: = _node_icon(data)
+		if str(data.get("flavor", "")) != "":
+			var mark: Color = base_color
+			mark.a = 0.9 if allocated or reachable else 0.45
+			c.draw_arc(pos, radius * 0.82, 0.0, TAU, 32, mark, 2.5 * line_scale, true)
+		var icon = _node_icon(data)
 		if icon != null:
-			var icon_size: = radius * 1.25
+			var icon_size = radius * 1.25
 			c.draw_texture_rect(icon, Rect2(pos - Vector2(icon_size, icon_size) / 2.0, Vector2(icon_size, icon_size)), false, icon_tint)
 		if id == selected_id:
 			c.draw_arc(pos, radius + ring + 7.0 * line_scale, 0.0, TAU, 40, Color(1, 1, 1, 0.95), 3.0 * line_scale, true)
@@ -475,7 +545,7 @@ func _select(id: String, follow: bool) -> void:
 	selected_id = id
 	_message = ""
 	if follow:
-		var data: = SkillTree.get_node_data(id)
+		var data = SkillTree.get_node_data(player_index, id)
 		_cam_target = Vector2(data.x, data.y)
 		_following = true
 	_refresh_info()
@@ -483,14 +553,18 @@ func _select(id: String, follow: bool) -> void:
 
 
 func _activate() -> void:
-	if SkillTree.get_node_data(selected_id).empty():
+	if SkillTree.get_node_data(player_index, selected_id).empty():
 		return
 	if SkillTree.allocated_set(player_index).has(selected_id):
 		return
-	var cost: = SkillTree.path_to(player_index, selected_id).size()
+	var cost = SkillTree.path_to(player_index, selected_id).size()
+	var nodes_before: int = SkillTree.graph(player_index).order.size()
 	if SkillTree.allocate_path(player_index, selected_id) > 0:
 		emit_signal("tree_changed", player_index)
+		var grown: int = SkillTree.graph(player_index).order.size() - nodes_before
 		_refresh_all()
+		if grown > 0:
+			_flash("The tree grows: %d new node%s revealed!" % [grown, "" if grown == 1 else "s"])
 	else:
 		_flash("Not enough skill points." if cost > 0 else "Can't reach that node.")
 
@@ -515,27 +589,27 @@ func _flash(text: String) -> void:
 
 
 func _move_selection(direction: Vector2) -> void:
-	var g: = SkillTree.graph()
-	var current: = SkillTree.get_node_data(selected_id)
+	var g = SkillTree.graph(player_index)
+	var current = SkillTree.get_node_data(player_index, selected_id)
 	if current.empty():
 		_select(SkillTree.START_ID, true)
 		return
-	var from: = Vector2(current.x, current.y)
-	var best_id: = ""
-	var best_score: = INF
+	var from = Vector2(current.x, current.y)
+	var best_id = ""
+	var best_score = INF
 	for id in g.order:
 		if id == selected_id:
 			continue
 		var data: Dictionary = g.nodes[id]
 		var offset: Vector2 = Vector2(data.x, data.y) - from
-		var dist: = offset.length()
+		var dist = offset.length()
 		if dist < 1.0:
 			continue
-		var dot: = offset.normalized().dot(direction)
+		var dot = offset.normalized().dot(direction)
 		if dot < 0.45:
 			continue
 		# Prefer close nodes straight ahead; connected neighbours get a small bonus.
-		var score: = dist * (2.2 - dot * 1.2)
+		var score = dist * (2.2 - dot * 1.2)
 		if id in g.adj[selected_id]:
 			score *= 0.8
 		if score < best_score:
@@ -546,7 +620,7 @@ func _move_selection(direction: Vector2) -> void:
 
 
 func _zoom_by(factor: float, screen_pos: Vector2) -> void:
-	var world_before: = _to_world(screen_pos)
+	var world_before = _to_world(screen_pos)
 	zoom = clamp(zoom * factor, MIN_ZOOM, MAX_ZOOM)
 	cam = world_before - (screen_pos - _canvas.rect_size / 2.0) / zoom
 	_following = false
@@ -554,13 +628,13 @@ func _zoom_by(factor: float, screen_pos: Vector2) -> void:
 
 
 func _node_at(screen_pos: Vector2) -> String:
-	var world: = _to_world(screen_pos)
-	var g: = SkillTree.graph()
-	var best: = ""
-	var best_dist: = INF
+	var world = _to_world(screen_pos)
+	var g = SkillTree.graph(player_index)
+	var best = ""
+	var best_dist = INF
 	for id in g.order:
 		var data: Dictionary = g.nodes[id]
-		var dist: = world.distance_to(Vector2(data.x, data.y))
+		var dist = world.distance_to(Vector2(data.x, data.y))
 		var reach: float = NODE_RADIUS[int(data.kind)] + 8.0 / zoom
 		if dist <= reach and dist < best_dist:
 			best = id
@@ -664,7 +738,7 @@ func _on_canvas_gui_input(event: InputEvent) -> void:
 			_following = false
 			_canvas.update()
 		else:
-			var hovered: = _node_at(event.position)
+			var hovered = _node_at(event.position)
 			if hovered != "":
 				_select(hovered, false)
 	elif event is InputEventMouseButton:
@@ -677,7 +751,7 @@ func _on_canvas_gui_input(event: InputEvent) -> void:
 					var was_click: bool = _dragging and _drag_distance < 10.0
 					_dragging = false
 					if was_click:
-						var clicked: = _node_at(event.position)
+						var clicked = _node_at(event.position)
 						if clicked != "":
 							_select(clicked, false)
 							_activate()
@@ -686,7 +760,7 @@ func _on_canvas_gui_input(event: InputEvent) -> void:
 				_drag_distance = 0.0
 			BUTTON_RIGHT:
 				if event.pressed:
-					var clicked: = _node_at(event.position)
+					var clicked = _node_at(event.position)
 					if clicked != "":
 						_select(clicked, false)
 						_refund_selected()
@@ -711,7 +785,7 @@ func _process(delta: float) -> void:
 	else:
 		_move_cooldown = 0.0
 
-	var redraw: = false
+	var redraw = false
 	if _rstick.length() > 0.25:
 		cam += _rstick * 900.0 * delta / zoom
 		_following = false
@@ -727,8 +801,8 @@ func _process(delta: float) -> void:
 		if _message_time <= 0.0:
 			_message = ""
 			_refresh_info()
-	if redraw:
-		_canvas.update()
+	# Frontier rings pulse, so keep redrawing.
+	_canvas.update()
 
 
 # Waits until the close/pause buttons are released before handing input back, so the press

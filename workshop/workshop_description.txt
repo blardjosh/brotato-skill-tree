@@ -1,0 +1,88 @@
+[h1]Skill Tree - an endless, Path of Exile style passive tree[/h1]
+
+Level-ups no longer give you four random upgrades. They give you [b]skill points[/b] for a huge passive tree, and past its edge the tree keeps growing as far as you dare to go.
+
+Plan a build from wave 1. Chase a keystone. Then step off the map into procedurally generated clusters that adapt to the build you're making, and loop all the way around the tree.
+
+Works [b]solo and in local co-op[/b] (2-4 players, each with their own tree). Built for the latest Brotato with Abyssal Terrors and Primal Dread.
+
+[h2]The tree[/h2]
+[list]
+[*][b]105 hand-placed nodes[/b] in 8 sectors: Vitality, Melee, Precision, Ranged, Elemental, Engineering, Fortune and Agility.
+[*]Small passives, [b]16 notables[/b] and [b]8 keystones[/b] with big trade-offs, plus rings that link neighbouring sectors for hybrid builds.
+[*]Pick any node and the shortest path lights up with its cost. Click once to take the whole path.
+[*]Refund nodes freely, as long as the rest stays connected (can be turned off).
+[/list]
+
+[h3]Keystones[/h3]
+[list]
+[*][b]Colossus[/b]: +42 Max HP, +4 Armor, but slower movement and attacks
+[*][b]Berserker[/b]: +20 Melee Damage, +25% Damage, but less Armor and Dodge
+[*][b]Deadeye[/b]: +24% Crit Chance, +20% Attack Speed, but less Max HP and Armor
+[*][b]Artillery[/b]: +12 Ranged Damage, +90 Range, but slower movement and attacks
+[*][b]Elemental Overload[/b]: +12 Elemental Damage, +30% Explosion Damage, but less Melee and Ranged Damage
+[*][b]Mechanist[/b]: +18 Engineering, +25% Structure Damage, but less Damage and Attack Speed
+[*][b]Midas[/b]: +30 Harvesting, +25 Luck, cheaper shops, but -15% Damage
+[*][b]Phantom[/b]: +21% Dodge, +15% Speed, but less Max HP and HP Regeneration
+[/list]
+
+[h2]The endless frontier[/h2]
+Keystones aren't the end. Take one and a new [b]cluster[/b] appears beyond it.
+[list]
+[*][b]13 geometric cluster patterns[/b] from 6 to 25 nodes: gates, crosses, hex cells, spirals, ladders, crossroads, bastions and full honeycombs. They're always neatly spaced, with no tangled lines.
+[*]Every cluster has loops, multiple routes, [b]2-7 notables or capstones[/b], and at least two exits heading different ways.
+[*][b]Orbit exits[/b] (cyan ring) grow the next cluster [i]around[/i] the tree instead of away from it. Go deep, then circle over to another sector and link back into the tree.
+[*][b]Clusters adapt to your build.[/b] New nodes mostly offer stats like the node you just took and its neighbours, and partly the stats you've invested in most.
+[*]Every cluster also has a [b]New direction[/b] exit with stats you [i]haven't[/i] been taking, so you can always reshape your build.
+[*]The further out you go, the stronger the nodes get.
+[*]Everything you uncover is saved with your run and never rerolls.
+[/list]
+
+[h2]Red crits[/h2]
+Crit chance past 100% finally does something.
+[list]
+[*]Every 1% over 100% is a 1% chance to land a [b][color=#ff5a5a]red crit[/color][/b], a stronger crit shown as a red number.
+[*]Past 200%, red crits are guaranteed and you start rolling purple [b]overcrits[/b] (up to 4 tiers).
+[*]Each tier multiplies crit damage by 1.5x, and some nodes push that even higher.
+[/list]
+
+[h2]Mechanized, Mutated and Cursed clusters[/h2]
+Lean into a path and whole clusters start taking it on. Their bonuses scale with your level on that path and keep growing as it does.
+[list]
+[*][b]Mechanized[/b] scales with your Evolution: engineering, structures, armor, attack speed, range, explosions and more.
+[*][b]Mutated[/b] scales with negative Evolution: max HP, regen, life steal, melee, speed, dodge and more.
+[*][b]Cursed[/b] scales with your Curse: damage, crit, luck, harvesting and dodge, at the cost of more Curse.
+[*]They never appear until you've invested in a path. The higher your level, the more often they show up.
+[*]Small side nodes offer +1 Evolution, -1 Evolution or +1 Curse if you want to push a path.
+[/list]
+Mechanized and Mutated need Primal Dread; Cursed needs Abyssal Terrors.
+
+[h2]Oddities, named notables and relics[/h2]
+[list]
+[*][b]Oddity capstones[/b] give stats you can't normally level: pickup range, blocked hits, materials per crate, bounces, piercing, damage vs bosses, cheaper rerolls and more.
+[*][b]Named notables[/b] with unusual effects: Crimson Focus, Bloodletter, Lucky Break, Second Wind, Scrap Magnet and others.
+[*][b]Relics[/b] are very rare and appear at most once each per run:
+[list]
+[*][b]Bottomless Bank[/b]: interest keeps paying after wave 20
+[*][b]Evergreen[/b]: harvesting keeps growing after wave 20
+[*][b]Extra Arsenal[/b]: +1 weapon slot
+[*][b]Font of Insight[/b]: +1 skill point every wave
+[*][b]Blood Moon[/b]: +25% crit chance and devastating red crits
+[*]...plus Treasure Map, Lumberjack, Shopkeeper's Favor and Aegis
+[/list]
+[/list]
+
+[h2]How to use it[/h2]
+[list]
+[*]After a wave where you levelled up, the tree opens before the shop. In co-op, each player takes a turn.
+[*]In the shop, press the [b]Skill Tree[/b] button next to Reroll, [b]P[/b] on keyboard or [b]Back/Select[/b] on a controller.
+[*][b]Mouse:[/b] click to take, right-click to refund, drag to pan, scroll to zoom.
+[*][b]Controller:[/b] stick to move, A to take, Y to refund, LB/RB to zoom, B to close.
+[*]Unspent points carry over to the shop and later waves.
+[/list]
+
+[h2]Settings[/h2]
+With [b]Mod Options[/b] installed you get a Skill Tree page: open the tree after waves, allow refunds, 1-3 points per level, and node power from 50% to 200%. Mod Options is optional; without it the defaults are used.
+
+[h2]Compatibility[/h2]
+Replaces the vanilla level-up choices, so mods that change those choices won't have an effect. Works with Damage Meter, Mod Options and Co-op Trading.

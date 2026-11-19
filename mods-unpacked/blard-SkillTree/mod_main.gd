@@ -8,19 +8,24 @@ const MOD_OPTIONS_PATH := "/root/ModLoader/Oudstand-ModOptions/ModOptions"
 const CONFIG_PATH := "res://mods-unpacked/blard-SkillTree/config.gd"
 
 # Current option values (read through config.gd), plus caches shared by the static helpers.
-var config: = {}
-var graph_cache: = {}
-var icon_cache: = {}
+var config = {}
+var graph_cache = {}
+var player_graph_cache = {}
+var red_cache = {}
+var icon_cache = {}
 var _mod_options = null
-var _register_attempts: = 0
+var _register_attempts = 0
 
 
 func _init() -> void:
 	var dir: String = ModLoaderMod.get_unpacked_dir() + MOD_ID + "/"
-	# Only leaf scripts are extended, so no other scripts inherit a stale parent.
 	ModLoaderMod.install_script_extension(dir + "extensions/main.gd")
 	ModLoaderMod.install_script_extension(dir + "extensions/ui/menus/shop/shop.gd")
 	ModLoaderMod.install_script_extension(dir + "extensions/ui/menus/shop/coop_shop.gd")
+	# Red crits. enemy.gd has subclasses (bosses); ModLoader handles that, as other mods
+	# that extend enemy.gd on this patch show.
+	ModLoaderMod.install_script_extension(dir + "extensions/entities/units/enemies/enemy.gd")
+	ModLoaderMod.install_script_extension(dir + "extensions/visual_effects/floating_text/floating_text_manager.gd")
 	ModLoaderLog.info("Loaded", LOG_NAME)
 
 
